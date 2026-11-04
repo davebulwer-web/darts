@@ -508,6 +508,9 @@ const HAND = [
 '.........ooooooooooo......',
 ];
 const PINCH = { x: 5, y: 7 };
+// Dave's 4-frame hand sheet (27 x 43 frames). Every frame is lined up so the pinch is at HAND_PINCH.
+const HAND_FW = 27, HAND_FH = 43, HAND_FRAMES = 4, HAND_PINCH = { x: 5, y: 5 }, HAND_FPS = 6;
+const handSheet = new Image(); handSheet.src = 'data:image/png;base64,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';
 const HAND_MAP = { o: C.outline, s: '#e8968c', h: '#b8686a', l: '#fac4ba', n: '#fadcd2' };
 function drawSprite(rows, x, y, map) {
   for (let r = 0; r < rows.length; r++) for (let c = 0; c < rows[r].length; c++) { const k = rows[r][c]; if (k !== '.') px(x + c, y + r, map[k]); }
@@ -1097,7 +1100,10 @@ function render() {
   if (state === 'aim' || state === 'title') {
     const a = aimPoint(), hx = Math.round(a.x), hy = Math.round(a.y);
     const pxn = Math.round(a.x) + 3, pyn = Math.round(a.y - bobNow()) + 9;   // where the fingers pinch the dart
-    drawSprite(HAND, pxn - PINCH.x, pyn - PINCH.y, HAND_MAP);
+    if (handSheet.complete && handSheet.naturalWidth) {
+      const fi = Math.floor(hand.t * HAND_FPS) % HAND_FRAMES;
+      ctx.drawImage(handSheet, fi * HAND_FW, 0, HAND_FW, HAND_FH, pxn - HAND_PINCH.x, pyn - HAND_PINCH.y, HAND_FW, HAND_FH);
+    } else drawSprite(HAND, pxn - PINCH.x, pyn - PINCH.y, HAND_MAP);
     const n = Math.max(Math.abs(hx - pxn), Math.abs(hy - pyn)) || 1;
     for (let i = 0; i <= n; i++) {
       const x = Math.round(pxn + (hx - pxn) * i / n), y = Math.round(pyn + (hy - pyn) * i / n);
