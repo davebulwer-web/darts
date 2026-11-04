@@ -554,7 +554,7 @@ const sfx = {
 
 // ---------- scorer voice + title music ----------
 // Recorded clips live in sounds/voice/<key>.mp3. A call is only made when a clip for it exists.
-const VOICE = new Set(['60', '81', '95', '100', '140', '180', 'no-score', 'match-start', 'leg-1', 'leg-2', 'leg-3',
+const VOICE = new Set(['to-throw-first', '60', '81', '95', '100', '140', '180', 'no-score', 'match-start', 'leg-1', 'leg-2', 'leg-3',
   ...['jordan', 'fergus', 'carl', 'pavan', 'bhups', 'ekow', 'andy', 'dave'].flatMap(n => ['name-' + n, 'game-' + n])]);
 const clips = {};
 function clip(k) { if (!clips[k]) { const a = new Audio('sounds/voice/' + k + '.mp3'); a.preload = 'auto'; clips[k] = a; } return clips[k]; }
@@ -738,7 +738,7 @@ function newLeg() {
   cpu.afterTon = false;
   startVisit();
   const p = players[cur];
-  if (kind !== 'practice') say('leg-' + (players.reduce((n, q) => n + q.legs, 0) + 1), nameKey(p));
+  if (kind !== 'practice') say('leg-' + (players.reduce((n, q) => n + q.legs, 0) + 1), nameKey(p), nameKey(p) && 'to-throw-first');
   banner = { text: kind === 'practice' ? (isRTC() ? 'AIM FOR 1' : 'GAME ON') : (p.cpu ? p.name : p.name === 'YOU' ? 'YOU' : p.name) + ' TO THROW', t: 70 };
 }
 function startVisit() {
