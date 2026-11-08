@@ -21,3 +21,7 @@ Each character has a 48 x 48 portrait. Finished pixel art goes in `PORTRAIT_DATA
 Clips live in `sounds/voice`. Per-character calls (`name-<id>.mp3` and `game-<id>.mp3`) are optional: add the id to the list next to `VOICE` once both files exist.
 
 The whole game is a single `index.html` file with no build step. Open it in a browser to play locally.
+
+## PixelLab art
+
+The pub background (`assets/pub.png`), title screen (`assets/title.png`) and each player's throwing animation (`assets/throw/<id>.png`, nine 48 x 96 frames) were made with PixelLab. `THROW_META` in `index.html` gives each player's release frame and where the dart leaves the hand. If an image is missing, the game falls back to the drawn-in-code version.

@@ -240,13 +240,26 @@ const bg = document.createElement('canvas'); bg.width = W; bg.height = H;
 })();
 
 // ---------- pub scene background (computer's turn) ----------
-const MB = { x: 178, y: 64, r: 12 };   // the small board on the pub wall
+const MB = { x: 156, y: 72, r: 12 };   // the small board on the pub wall
 const pub = document.createElement('canvas'); pub.width = W; pub.height = H;
-(function renderPub() {
+// Pixel art made with PixelLab (pixellab.ai). Until an image loads, the drawn-in-code version shows.
+const loadImg = (src, done) => { const i = new Image(); i.onload = () => done(i); i.src = src; return i; };
+let pubArt = null, titleArt = null;
+loadImg('assets/pub.png', i => { pubArt = i; renderPub(); });
+loadImg('assets/title.png', i => { titleArt = i; });
+renderPub();
+function renderPub() {
   const p = pub.getContext('2d');
   p.imageSmoothingEnabled = false;
   p.drawImage(bg, 0, 0);               // keeps the blackboard on the right
   const f = (x, y, w, h, c) => { p.fillStyle = c; p.fillRect(x, y, w, h); };
+  if (pubArt) {
+    p.drawImage(pubArt, 0, 0, 206, 200, 0, 0, 206, 200);
+    f(MB.x - 16, MB.y - 16, 32, 32, '#1a0e08'); f(MB.x - 15, MB.y - 15, 30, 30, '#2a1a10');
+    p.drawImage(bg, BX - 96, BY - 96, 192, 192, MB.x - 12, MB.y - 12, 24, 24);
+    f(64, 182, 3, 2, C.metal);
+    return;
+  }
   f(0, 0, 206, 200, C.pubWall);
   for (let x = 0; x < 206; x += 12) f(x, 0, 1, 100, '#42261c');          // wallpaper stripes
   f(0, 100, 206, 34, C.pubPanel); f(0, 100, 206, 2, C.counterTop);       // wood panelling
@@ -269,7 +282,7 @@ const pub = document.createElement('canvas'); pub.width = W; pub.height = H;
   p.drawImage(bg, BX - 96, BY - 96, 192, 192, MB.x - 12, MB.y - 12, 24, 24);
   // oche line
   f(64, 182, 3, 2, C.metal);
-})();
+}
 const toMini = (lx, ly) => ({ x: Math.round(MB.x + (lx - BX) * MB.r / 96), y: Math.round(MB.y + (ly - BY) * MB.r / 96) });
 
 // ---------- the 16 players ----------
@@ -529,7 +542,44 @@ const POSES = {
   release: { e: [9, -8],   h: [19, -17] },
   follow:  { e: [12, -2],  h: [21, -5] },
 };
-function drawThrower(o, pose) {
+// Throwing animations: one 9-frame strip (48 x 96 per frame) per player, made with PixelLab.
+// Frame 0 is the aim; the arm draws back over the following frames until it shoots out on the
+// release frame. THROW_META[id] = [release frame, hand x, hand y at release].
+const THROW_X = 26, THROW_Y = 87;      // where frame (0,0) is drawn
+const THROW_META = {
+  trevor: [8, 44, 42],
+  mavis: [8, 45, 26],
+  kev: [8, 47, 27],
+  priya: [7, 42, 21],
+  gordon: [8, 47, 27],
+  dex: [8, 46, 26],
+  brenda: [8, 47, 29],
+  oscar: [8, 47, 25],
+  siobhan: [8, 38, 22],
+  tomasz: [8, 47, 23],
+  yuki: [7, 47, 25],
+  raj: [7, 47, 26],
+  lou: [8, 47, 28],
+  greta: [8, 47, 25],
+  frankie: [7, 47, 20],
+  duke: [8, 47, 26],
+};
+const throwArt = {};
+OPPONENTS.forEach(o => loadImg(`assets/throw/${o.id}.png`, i => { throwArt[o.id] = i; }));
+function poseFrame(o, pose, t) {
+  const R = THROW_META[o.id][0];
+  if (pose === 'aim') return 0;
+  if (pose === 'back') return Math.min(R - 1, 1 + Math.floor(Math.max(0, t) * (R - 1) / 5));
+  return pose === 'release' || t < 4 ? R : Math.min(8, R + 1);
+}
+function releasePoint(o) {
+  const h = throwArt[o.id] && THROW_META[o.id];
+  if (h) return { x: THROW_X + h[1], y: THROW_Y + h[2] };
+  const r = POSES.release; return { x: 38 + 12 + r.h[0], y: 102 + 22 + r.h[1] };
+}
+function drawThrower(o, pose, t = 0) {
+  const art = throwArt[o.id];
+  if (art && THROW_META[o.id]) { ctx.drawImage(art, poseFrame(o, pose, t) * 48, 0, 48, 96, THROW_X, THROW_Y, 48, 96); return; }
   const x0 = 38, top = 102;
   // back arm
   rect(x0 + 3, top + 21, 4, 20, o.shirt); rect(x0 + 3, top + 41, 4, 3, o.skin);
@@ -820,10 +870,11 @@ function updateTitle() {
   const s = titleShow; s.t++;
   const k = s.t % 110;
   s.pose = k < 40 ? 'aim' : k < 52 ? 'back' : k < 60 ? 'release' : 'follow';
+  s.poseT = k < 52 ? (k - 40) / 2.4 : (k - 60) / 2;
   if (k === 56) {
     const opp = OPPONENTS[s.opp], t = [T.T20, T.T20, T.D20, T.BULL, T.T19][(Math.random() * 5) | 0];
-    s.land = cpuThrow(opp, t, {}); const m = toMini(s.land.x, s.land.y), r = POSES.release;
-    s.flight = { sx: 38 + 12 + r.h[0], sy: 102 + 22 + r.h[1], ex: m.x, ey: m.y, f: 0, n: 22 };
+    s.land = cpuThrow(opp, t, {}); const m = toMini(s.land.x, s.land.y), r = releasePoint(opp);
+    s.flight = { sx: r.x, sy: r.y, ex: m.x, ey: m.y, f: 0, n: 22 };
   }
   if (s.flight && ++s.flight.f >= s.flight.n) { s.darts.push(toMini(s.land.x, s.land.y)); s.flight = null; }
   if (k === 0 && s.darts.length >= 3) { s.darts = []; s.opp = (s.opp + 1 + ((Math.random() * (OPPONENTS.length - 1)) | 0)) % OPPONENTS.length; }
@@ -1124,10 +1175,11 @@ function updateCpu() {
     cpu.target = t; cpu.land = cpuThrow(opp, t, { finishing, afterTon: cpu.afterTon });
   }
   cpu.pose = cpu.t < 0 ? (cpu.t > -18 ? 'follow' : 'aim') : cpu.t < 30 ? 'aim' : cpu.t < 42 ? 'back' : cpu.t < 50 ? 'release' : 'follow';
+  cpu.poseT = cpu.t < 0 ? 9 : cpu.t < 42 ? (cpu.t - 30) / 2.4 : (cpu.t - 50) / 2;
   if (cpu.t === 46) {
-    const s = POSES.release; sfx.throw();
+    const s = releasePoint(opp); sfx.throw();
     const m = toMini(cpu.land.x, cpu.land.y);
-    flight = { sx: 38 + 12 + s.h[0], sy: 102 + 22 + s.h[1], ex: m.x, ey: m.y, f: 0, n: 22, pub: true };
+    flight = { sx: s.x, sy: s.y, ex: m.x, ey: m.y, f: 0, n: 22, pub: true };
   }
   if (flight && flight.pub) { flight.f++; if (flight.f >= flight.n) { flight = null; land(cpu.land.x, cpu.land.y); } }
 }
@@ -1217,11 +1269,27 @@ function drawMenu() {
   drawText('ARROWS TO CHOOSE   SPACE TO SELECT', 160, 174, C.chalkDim, 1, 'center');
   drawText('ESC RETURNS HERE ANY TIME', 160, 184, C.chalkDim, 1, 'center');
 }
+// The title cycles: a splash screen first, then a computer player throwing in the pub with the ladder.
+const SPLASH = 480;
+function drawSplash() {
+  const s = titleShow;
+  ctx.drawImage(titleArt, 0, 0);
+  const lx = 98, ly = 40;
+  drawText('OCHE', lx + 2, ly + 2, C.outline, 6, 'center'); drawText('OCHE', lx, ly, C.yellow, 6, 'center');
+  drawText('LEGENDS', lx + 2, ly + 36, C.outline, 4, 'center'); drawText('LEGENDS', lx, ly + 34, C.chalk, 4, 'center');
+  rect(lx - 70, ly + 62, 140, 1, C.yellow);
+  drawText('PUB DARTS FOR 1 OR 2 PLAYERS', lx + 1, ly + 69, C.outline, 1, 'center');
+  drawText('PUB DARTS FOR 1 OR 2 PLAYERS', lx, ly + 68, C.chalk, 1, 'center');
+  drawText('16 PLAYERS  ONE OCHE KING', lx + 1, ly + 79, C.outline, 1, 'center');
+  drawText('16 PLAYERS  ONE OCHE KING', lx, ly + 78, C.chalkDim, 1, 'center');
+  if (Math.floor(s.t / 30) % 2 === 0) { rect(lx - 46, 160, 92, 13, C.bannerBg); drawText('PRESS SPACE', lx, 164, C.yellow, 1, 'center'); }
+}
 function drawTitle() {
   const s = titleShow, o = OPPONENTS[s.opp];
+  if (titleArt && s.t % 1800 < SPLASH) { drawSplash(); return; }
   ctx.drawImage(pub, 0, 0);
   s.darts.forEach(m => { px(m.x, m.y, C.metal); px(m.x + 1, m.y + 1, C.p2); });
-  drawThrower(o, s.pose);
+  drawThrower(o, s.pose, s.poseT);
   if (s.flight) {
     const f = s.flight, k = f.f / f.n;
     const x = f.sx + (f.ex - f.sx) * k, y = f.sy + (f.ey - f.sy) * k - Math.sin(k * Math.PI) * 10;
@@ -1333,7 +1401,7 @@ function drawPub() {
   ctx.drawImage(pub, 0, 0);
   const p = players[cur], o = p.cpu;
   dartsThisVisit.forEach(d => { const m = toMini(d.x, d.y); px(m.x, m.y, C.metal); px(m.x + 1, m.y + 1, C.p2); });
-  const hand2 = drawThrower(o, cpu.pose);
+  drawThrower(o, cpu.pose, cpu.poseT);
   if (flight && flight.pub) {
     const k = flight.f / flight.n;
     const x = flight.sx + (flight.ex - flight.sx) * k, y = flight.sy + (flight.ey - flight.sy) * k - Math.sin(k * Math.PI) * 10;
