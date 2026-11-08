@@ -14,7 +14,7 @@ Matches have a recorded scorer calling scores and legs, and the title screens ha
 
 ## Portraits
 
-Each character has a 48 x 48 portrait. Finished pixel art goes in `PORTRAIT_DATA` in `index.html` as a data URI keyed by the character's id; anyone without one gets a portrait drawn in code from their look in `OPPONENTS`.
+Each character has a 48 x 48 portrait. Finished pixel art goes in `PORTRAIT_DATA` in `index.html` as a data URI keyed by the character's id; anyone without one gets a portrait drawn in code from their look in `OPPONENTS`. All 16 players now have portraits generated with PixelLab (pixellab.ai) from text descriptions of their personas; the drawn-in-code versions remain as a fallback.
 
 ## Scorer voice
 
