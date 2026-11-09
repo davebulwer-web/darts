@@ -2,7 +2,7 @@
 
 A retro pixel-art darts game for the browser, for one or two players.
 
-Time your throw as the hand drifts across the board, then work your way up a ladder of sixteen pub players, or pick a player and try to win a 16-player knockout tournament. Games available are 501 and 301, played as best of 1, 3 or 5.
+Time your throw as the hand drifts across the board, then work your way up a ladder of sixteen pub players, or pick a player and try to win a 16-player knockout tournament. Games available are 501, 301 and Cricket, played as best of 1, 3 or 5.
 
 Matches have a recorded scorer calling scores and legs, and the title screens have their own music. In a 2 player game, each player picks one of the sixteen characters to play as. All the characters are fictional.
 
